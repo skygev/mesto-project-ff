@@ -12,7 +12,7 @@ const gallery = document.querySelector(".places__list");
 const template = document.querySelector("#card-template").content;
 
 //создать карточку
-function createCard(name, link) {
+function createCard(name, link, deleteCard) {
   const card = template.cloneNode(true);
   card.querySelector(".card__title").textContent = name;
   card.querySelector(".card__image").src = link;
@@ -25,7 +25,7 @@ function createCard(name, link) {
 
 //добавить карточку в галерею
 initialCards.forEach((card) => {
-  const newCard = createCard(card.name, card.link);
+  const newCard = createCard(card.name, card.link, deleteCard);
   gallery.append(newCard);
 });
 
