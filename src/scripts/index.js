@@ -127,7 +127,8 @@ const placeLinkInput = сardFormNew.querySelector(".popup__input_type_url");
     placeNameInput.value,
     placeLinkInput.value,
     deleteCard,
-    likeCard
+    likeCard,
+    openImagePopup // Передается функция для открытия попапа
   );
   gallery.prepend(newCard);
 

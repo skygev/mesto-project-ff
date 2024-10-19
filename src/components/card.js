@@ -11,8 +11,8 @@ function createCard(name, link, deleteCard, likeCard, openImagePopup) {
   cardImage.alt = name;
 
   // открытие попапа при клике на изображение карточки из 2-го спринта по js
-  cardImage.addEventListener("click", function () {
-    openImagePopup(link, name);
+  cardImage.addEventListener("click", () => {
+    openImagePopup(link, name); // Используется функция для открытия попапа
   });
 
   // Слушатель - Удаление карточки
