@@ -2,12 +2,13 @@
   width: 100%;
   height: 47px;
   border: 0;
-  border-bottom: 1px solid rgba(0, 0, 0, .2);
+  border-bottom: 1px solid #c4c4c4;
+  opacity: 0.5;
   font-size: 14px;
   line-height: 18px;
   box-sizing: border-box;
   padding: 10px 0 0;
-  margin-bottom: 10px;
+  margin-bottom: 0px; /* поменяла с 10 на 0 для совпадения с шаблоном */
 }
 
 .popup__input:last-of-type {
@@ -19,4 +20,20 @@
     font-size: 12px;
     line-height: 15px;
   }
+}
+
+/* 7 спринт: */
+
+.popup__input_type_error {
+  font-size: 14px;
+  left: 0;
+  opacity: 1;
+}
+
+.popup__input-error_active {
+  color: red;
+  font-size: 12px;
+  top: 40px;
+  left: 0;
+  opacity: 1;
 }

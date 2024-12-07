@@ -10,22 +10,22 @@ function closePopup(popup) {
   popup.classList.remove("popup_is-animated");
   popup.classList.remove("popup_is-opened");
   document.removeEventListener("keydown", handleEscClose); // Удаляем обработчик нажатия на клавишу Esc
+  clearInputFields(popup); // Очистка полей ввода при закрытии
 }
 
-/* // Закрытие попапов по нажатию на крестик
-closeButtons.forEach((button) => {
-  const popupElement = button.closest(".popup"); // находим родительский попап
-  button.addEventListener("click", () => closePopup(popupElement));
-});
-
-// Закрытие попапа при клике на оверлей (тёмный фон)
-popups.forEach((popupElement) => {
-  popupElement.addEventListener("click", function (event) {
-    if (event.target === popupElement) {
-      closePopup(popupElement);
-    }
+// Очистка полей ввода
+function clearInputFields(popup) {
+  const inputs = popup.querySelectorAll(".popup__input");
+  inputs.forEach((input) => {
+    input.value = "";
+    input.classList.remove("popup__input_type_error");
   });
-}); */
+
+  const errorMessages = popup.querySelectorAll(".popup__input-error");
+  errorMessages.forEach((error) => {
+    error.textContent = "";
+  });
+}
 
 // Закрытие попапов по нажатию на крестик
 function addCloseButtonListeners() {
