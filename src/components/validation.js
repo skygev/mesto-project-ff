@@ -1,67 +1,81 @@
-function showInputError(formElement, inputElement, errorMessage) {
+// Функция для показа ошибки
+function showInputError(formElement, inputElement, errorMessage, config) {
   const errorElement = formElement.querySelector(`.${inputElement.id}-error`);
+  if (!errorElement) return;
   errorElement.textContent = errorMessage;
-  errorElement.classList.add("popup__input-error_active");
-  inputElement.classList.add("popup__input_type_error");
+  errorElement.classList.add(config.errorActiveClass);
+  inputElement.classList.add(config.inputErrorClass);
 }
 
-function hideInputError(formElement, inputElement) {
+// Функция для скрытия ошибки
+function hideInputError(formElement, inputElement, config) {
   const errorElement = formElement.querySelector(`.${inputElement.id}-error`);
-  errorElement.classList.remove("popup__input-error_active");
+  if (!errorElement) return;
+  errorElement.classList.remove(config.errorActiveClass);
   errorElement.textContent = "";
+  inputElement.classList.remove(config.inputErrorClass);
 }
 
-// Функция проверки валидности через атрибут pattern и data-error-message
-function checkInputValidity(formElement, inputElement) {
-  // Проверяем, есть ли у элемента pattern
+// Функция проверки валидности поля ввода
+function checkInputValidity(formElement, inputElement, config) {
   if (inputElement.validity.patternMismatch) {
-    // Получаем сообщение из data-error-message
-    const customErrorMessage = inputElement.dataset.errorMessage;
-    showInputError(formElement, inputElement, customErrorMessage);
+    // Проверяем, есть ли кастомное сообщение об ошибке
+    const customErrorMessage =
+      inputElement.dataset.errorMessage || "Некорректный ввод";
+    showInputError(formElement, inputElement, customErrorMessage, config);
   } else if (!inputElement.validity.valid) {
-    // Для стандартных ошибок (например, пустое поле)
-    showInputError(formElement, inputElement, inputElement.validationMessage);
+    // Показываем стандартное сообщение об ошибке
+    showInputError(
+      formElement,
+      inputElement,
+      inputElement.validationMessage,
+      config
+    );
   } else {
-    // Если поле валидно
-    hideInputError(formElement, inputElement);
+    // Если поле валидно, скрываем ошибку
+    hideInputError(formElement, inputElement, config);
   }
 }
 
 // Функция управления состоянием кнопки отправки
-function toggleButtonState(inputList, buttonElement) {
+function toggleButtonState(inputList, buttonElement, config) {
   const hasInvalidInput = inputList.some(
     (inputElement) => !inputElement.validity.valid
   );
   if (hasInvalidInput) {
     buttonElement.setAttribute("disabled", true);
-    buttonElement.classList.add("popup__button_disabled");
+    buttonElement.classList.add(config.inactiveButtonClass);
   } else {
     buttonElement.removeAttribute("disabled");
-    buttonElement.classList.remove("popup__button_disabled");
+    buttonElement.classList.remove(config.inactiveButtonClass);
   }
 }
 
 // Установка слушателей для формы
-function setEventListeners(formElement) {
-  const inputList = Array.from(formElement.querySelectorAll(".popup__input"));
-  const buttonElement = formElement.querySelector(".popup__button");
+function setEventListeners(formElement, config) {
+  const inputList = Array.from(
+    formElement.querySelectorAll(config.inputSelector)
+  ); // ✅ Используем config.inputSelector
+  const buttonElement = formElement.querySelector(config.submitButtonSelector);
 
-  toggleButtonState(inputList, buttonElement);
+  // Устанавливаем начальное состояние кнопки
+  toggleButtonState(inputList, buttonElement, config);
 
+  // Добавляем обработчики событий для каждого поля ввода
   inputList.forEach((inputElement) => {
     inputElement.addEventListener("input", () => {
-      checkInputValidity(formElement, inputElement);
-      toggleButtonState(inputList, buttonElement);
+      checkInputValidity(formElement, inputElement, config);
+      toggleButtonState(inputList, buttonElement, config);
     });
   });
 }
 
-// Функция для очистки полей ввода
-function clearInputFields(popup) {
-  const inputFields = popup.querySelectorAll("input"); // Получаем все поля ввода в модальном окне
+// Функция для очистки полей ввода и скрытия ошибок
+function clearInputFields(popup, config) {
+  const inputFields = popup.querySelectorAll(config.inputSelector);
   inputFields.forEach((input) => {
-    input.value = ""; // Устанавливаем значение каждого поля в пустую строку
-    hideInputError(popup, input); // Убираем любые ошибки ввода
+    input.value = "";
+    hideInputError(popup, input, config);
   });
 }
 
@@ -73,4 +87,5 @@ function enableValidation(config) {
   });
 }
 
+// Экспорт функций для использования в других модулях
 export { enableValidation, clearInputFields };

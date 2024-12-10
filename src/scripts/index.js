@@ -225,6 +225,7 @@ enableValidation({
   inactiveButtonClass: "popup__button_disabled",
   inputErrorClass: "popup__input_type_error",
   errorClass: "popup__error_visible",
+  errorActiveClass: "popup__input-error_active",
 });
 
 // Загрузка данных при старте
