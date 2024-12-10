@@ -55,7 +55,7 @@ function toggleButtonState(inputList, buttonElement, config) {
 function setEventListeners(formElement, config) {
   const inputList = Array.from(
     formElement.querySelectorAll(config.inputSelector)
-  ); // ✅ Используем config.inputSelector
+  );
   const buttonElement = formElement.querySelector(config.submitButtonSelector);
 
   // Устанавливаем начальное состояние кнопки
@@ -87,5 +87,4 @@ function enableValidation(config) {
   });
 }
 
-// Экспорт функций для использования в других модулях
 export { enableValidation, clearInputFields };
