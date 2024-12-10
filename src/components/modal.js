@@ -10,21 +10,12 @@ function closePopup(popup) {
   popup.classList.remove("popup_is-animated");
   popup.classList.remove("popup_is-opened");
   document.removeEventListener("keydown", handleEscClose); // Удаляем обработчик нажатия на клавишу Esc
-  clearInputFields(popup); // Очистка полей ввода при закрытии
-}
-
-// Очистка полей ввода
-function clearInputFields(popup) {
-  const inputs = popup.querySelectorAll(".popup__input");
-  inputs.forEach((input) => {
-    input.value = "";
-    input.classList.remove("popup__input_type_error");
-  });
-
-  const errorMessages = popup.querySelectorAll(".popup__input-error");
-  errorMessages.forEach((error) => {
-    error.textContent = "";
-  });
+  // Сброс состояния кнопки при закрытии попапа
+  const saveButton = popup.querySelector(".popup__button"); // Находим кнопку в текущем попапе
+  if (saveButton) {
+    saveButton.disabled = true; // Делаем кнопку неактивной
+    saveButton.classList.add("popup__button_disabled"); // Добавляем класс для неактивной кнопки
+  }
 }
 
 // Закрытие попапов по нажатию на крестик

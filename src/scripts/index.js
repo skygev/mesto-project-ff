@@ -15,13 +15,12 @@ import {
   getCards,
   updateProfileOnServer,
   addCard,
-  deleteCardFromServer,
-  likeCardOnServer,
-  unlikeCardOnServer,
   updateAvatarOnServer,
 } from "../components/api.js";
 
 console.log("Все импорты выполнены успешно");
+
+let userId; // Глобальная переменная для хранения ID пользователя
 
 // --- Константы ---
 const profileName = document.querySelector(".profile__title");
@@ -60,64 +59,21 @@ const addCardButton = document.querySelector(".profile__add-button");
 
 // --- Функции ---
 
-function handleLikeCard(event, cardId) {
-  const likeButton = event.target;
-  const likesCounter = likeButton
-    .closest(".card")
-    .querySelector(".card__likes-counter");
-
-  if (likeButton.classList.contains("card__like-button_is-active")) {
-    // Снятие лайка
-    unlikeCardOnServer(cardId)
-      .then((card) => {
-        likesCounter.textContent = card.likes.length;
-        likesCounter.style.display = card.likes.length > 0 ? "" : "none"; // Управляем видимостью
-        if (card.likes.length > 0) {
-          likeButton.classList.add("card__like-button_is-active");
-        } else {
-          likeButton.classList.remove("card__like-button_is-active");
-        }
-      })
-      .catch((error) => {
-        console.error("Ошибка при снятии лайка:", error);
-      });
-  } else {
-    // Установка лайка
-    likeCardOnServer(cardId)
-      .then((card) => {
-        likeButton.classList.add("card__like-button_is-active");
-        likesCounter.textContent = card.likes.length;
-      })
-      .catch((error) => {
-        console.error("Ошибка при постановке лайка:", error);
-      });
-  }
-}
-
 // Рендеринг карточек
-function renderCards(cards, userId) {
+const renderCards = (cards, userId) => {
   cards.forEach((card) => {
-    const isLikedByUser = card.likes.some((like) => like._id === userId); // Проверяем, лайкнул ли пользователь
-
-    const newCard = createCard(
+    const cardElement = createCard(
       card.name,
       card.link,
-      card.likes.length, // Количество лайков
+      card.likes,
       card._id,
-      isLikedByUser, // Передаем статус лайка
-      (cardId) => handleDeleteCard(cardId, newCard), // Передаем саму карточку для удаления
-      (event) => handleLikeCard(event, card._id), // Функция лайка
-      openImagePopup // Функция открытия попапа
+      userId,
+      card.owner._id, // Передаём ID владельца карточки
+      handleOpenImagePopup // Передаём функцию открытия попапа
     );
-
-    // Удаляем кнопку удаления, если карточка не принадлежит текущему пользователю
-    if (card.owner._id !== userId) {
-      newCard.querySelector(".card__delete-button").remove();
-    }
-
-    gallery.append(newCard); // Добавляем карточку в галерею
+    gallery.append(cardElement);
   });
-}
+};
 
 // Обновление профиля
 function updateProfile(data) {
@@ -130,8 +86,9 @@ function updateProfile(data) {
 function loadData() {
   Promise.all([getProfile(), getCards()])
     .then(([userData, cards]) => {
+      userId = userData._id; // Сохраняем ID пользователя
       updateProfile(userData);
-      renderCards(cards, userData._id);
+      renderCards(cards, userId);
     })
     .catch((error) => console.error("Ошибка загрузки данных:", error));
 }
@@ -171,18 +128,23 @@ function handleEditProfileFormSubmit(evt) {
 
   updateProfileOnServer(name, about)
     .then((data) => {
-      updateProfile(data);
-      closePopup(editPopup);
+      updateProfile(data); // Обновляем профиль на странице
+      closePopup(editPopup); // Закрываем попап
     })
-    .catch((error) => console.error("Ошибка обновления профиля:", error));
+    .catch((error) => {
+      console.error("Ошибка обновления профиля:", error);
+    })
+    .finally(() => {
+      toggleButtonText(saveButton, false); // Возвращаем текст кнопки в любом случае
+    });
 }
 
 // Сабмит формы добавления карточки
 function handleAddCardFormSubmit(evt) {
   evt.preventDefault();
 
-  const saveButton = evt.target.querySelector(".popup__button"); // Находим кнопку
-  toggleButtonText(saveButton, true); // Меняем текст кнопки на "Сохранение..."
+  const saveButton = evt.target.querySelector(".popup__button");
+  toggleButtonText(saveButton, true);
 
   const name = placeNameInput.value;
   const link = placeLinkInput.value;
@@ -192,35 +154,25 @@ function handleAddCardFormSubmit(evt) {
       const newCard = createCard(
         cardData.name,
         cardData.link,
-        cardData.likes.length,
-        cardData._id,
-        false,
-        () => handleDeleteCard(cardData._id),
-        (event) => handleLikeCard(event, cardData._id),
-        openImagePopup
+        cardData.likes, // Массив лайков
+        cardData._id, // ID карточки
+        userId, // Используем глобальный userId
+        cardData.owner._id, // ID владельца карточки
+        handleOpenImagePopup // Функция для открытия изображения
       );
-      gallery.prepend(newCard);
-      addCardForm.reset();
-      closePopup(newCardPopup);
-    })
-    .catch((error) => console.error("Ошибка добавления карточки:", error));
-}
 
-// Удаление карточки
-function handleDeleteCard(cardId, card) {
-  deleteCardFromServer(cardId) // Запрос на удаление карточки с сервера
-    .then(() => {
-      // Если запрос успешен, удаляем карточку из DOM
-      card.remove();
+      gallery.prepend(newCard); // Добавляем новую карточку
+      addCardForm.reset(); // Сбрасываем форму
+      closePopup(newCardPopup); // Закрываем попап
     })
     .catch((error) => {
-      console.error("Ошибка удаления карточки с сервера:", error);
-      // Здесь можно показать сообщение об ошибке пользователю
-    });
+      console.error("Ошибка добавления карточки:", error);
+    })
+    .finally(() => toggleButtonText(saveButton, false)); // Возвращаем текст кнопки
 }
 
 // Открытие попапа с изображением
-function openImagePopup(imageSrc, caption) {
+function handleOpenImagePopup(imageSrc, caption) {
   popupImage.src = imageSrc;
   popupImage.alt = caption;
   popupCaption.textContent = caption;
