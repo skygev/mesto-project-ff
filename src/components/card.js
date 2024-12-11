@@ -4,6 +4,26 @@ import {
   deleteCardFromServer,
 } from "../components/api.js";
 
+function handleLikeStatusChange(cardId, isLiked, likeButton, likesCounter) {
+  const apiCall = isLiked ? unlikeCardOnServer : likeCardOnServer;
+
+  apiCall(cardId)
+    .then((updatedCard) => {
+      likeButton.classList.toggle("card__like-button_is-active", !isLiked);
+      likesCounter.textContent = updatedCard.likes.length;
+      likesCounter.style.display = updatedCard.likes.length > 0 ? "" : "none";
+    })
+    .catch((err) => console.error("Ошибка лайка:", err));
+}
+
+function handleDeleteCard(card, cardId) {
+  deleteCardFromServer(cardId)
+    .then(() => {
+      card.remove();
+    })
+    .catch((err) => console.error("Ошибка удаления карточки:", err));
+}
+
 // Функция для создания карточки
 function createCard(
   name,
@@ -12,7 +32,9 @@ function createCard(
   cardId,
   userId,
   ownerId,
-  handleOpenImagePopup
+  handleOpenImagePopup,
+  handleLikeStatusChange,
+  handleDeleteCard
 ) {
   const template = document.querySelector("#card-template").content;
   const card = template.querySelector(".card").cloneNode(true);
@@ -50,26 +72,14 @@ function createCard(
     const isLiked = likeButton.classList.contains(
       "card__like-button_is-active"
     );
-    const apiCall = isLiked ? unlikeCardOnServer : likeCardOnServer;
-
-    apiCall(cardId)
-      .then((updatedCard) => {
-        likeButton.classList.toggle("card__like-button_is-active", !isLiked);
-        likesCounter.textContent = updatedCard.likes.length;
-        likesCounter.style.display = updatedCard.likes.length > 0 ? "" : "none";
-      })
-      .catch((err) => console.error("Ошибка лайка:", err));
+    handleLikeStatusChange(cardId, isLiked, likeButton, likesCounter);
   });
 
   // Обработчик удаления карточки
   if (userId === ownerId) {
-    deleteButton.addEventListener("click", () => {
-      deleteCardFromServer(cardId)
-        .then(() => {
-          card.remove();
-        })
-        .catch((err) => console.error("Ошибка удаления карточки:", err));
-    });
+    deleteButton.addEventListener("click", () =>
+      handleDeleteCard(card, cardId)
+    );
   } else {
     deleteButton.style.display = "none"; // Скрываем кнопку удаления для чужих карточек
   }
@@ -77,4 +87,4 @@ function createCard(
   return card;
 }
 
-export { createCard };
+export { createCard, handleLikeStatusChange, handleDeleteCard };

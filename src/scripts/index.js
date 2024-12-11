@@ -2,14 +2,21 @@
 import "../pages/index.css";
 
 // Импорты компонентов
-import { createCard } from "../components/card.js";
+import {
+  createCard,
+  handleLikeStatusChange,
+  handleDeleteCard,
+} from "../components/card.js";
 import {
   openPopup,
   closePopup,
   addCloseButtonListeners,
   addOverlayClickListeners,
 } from "../components/modal.js";
-import { enableValidation } from "../components/validation.js";
+import {
+  enableValidation,
+  clearInputFields,
+} from "../components/validation.js";
 import {
   getProfile,
   getCards,
@@ -69,7 +76,9 @@ const renderCards = (cards, userId) => {
       card._id,
       userId,
       card.owner._id, // Передаём ID владельца карточки
-      handleOpenImagePopup // Передаём функцию открытия попапа
+      handleOpenImagePopup, // Передаём функцию открытия попапа
+      handleLikeStatusChange, // Передаём функцию обработки лайков
+      handleDeleteCard // Передаём функцию обработки удаления карточки
     );
     gallery.append(cardElement);
   });
@@ -93,56 +102,59 @@ function loadData() {
     .catch((error) => console.error("Ошибка загрузки данных:", error));
 }
 
+// Функция сброса состояния кнопки
+function resetButtonState(saveButton) {
+  if (saveButton) {
+    saveButton.disabled = true;
+    saveButton.classList.add("popup__button_disabled");
+  }
+}
+
 // Обработчик формы редактирования аватара
 function handleAvatarFormSubmit(evt) {
   evt.preventDefault();
-
-  const saveButton = evt.target.querySelector(".popup__button"); // Находим кнопку
-  toggleButtonText(saveButton, true); // Меняем текст кнопки на "Сохранение..."
+  const saveButton = evt.target.querySelector(".popup__button");
+  toggleButtonText(saveButton, true);
 
   const avatarUrl = avatarInput.value;
 
   updateAvatarOnServer(avatarUrl)
     .then((data) => {
-      // Обновляем фон аватара
       profileAvatar.style.backgroundImage = `url(${data.avatar})`;
-
-      // Закрываем попап и сбрасываем форму
-      closePopup(avatarPopup);
       avatarForm.reset();
+      resetButtonState(saveButton); // Сброс состояния кнопки при успешной отправке
+      closePopup(avatarPopup);
     })
     .catch((error) => {
       console.error("Ошибка обновления аватара:", error);
-    });
+    })
+    .finally(() => toggleButtonText(saveButton, false));
 }
 
 // Сабмит формы редактирования профиля
 function handleEditProfileFormSubmit(evt) {
   evt.preventDefault();
-
-  const saveButton = evt.target.querySelector(".popup__button"); // Находим кнопку
-  toggleButtonText(saveButton, true); // Меняем текст кнопки на "Сохранение..."
+  const saveButton = evt.target.querySelector(".popup__button");
+  toggleButtonText(saveButton, true);
 
   const name = nameInput.value;
   const about = jobInput.value;
 
   updateProfileOnServer(name, about)
     .then((data) => {
-      updateProfile(data); // Обновляем профиль на странице
-      closePopup(editPopup); // Закрываем попап
+      updateProfile(data);
+      resetButtonState(saveButton); // Сброс состояния кнопки при успешной отправке
+      closePopup(editPopup);
     })
     .catch((error) => {
       console.error("Ошибка обновления профиля:", error);
     })
-    .finally(() => {
-      toggleButtonText(saveButton, false); // Возвращаем текст кнопки в любом случае
-    });
+    .finally(() => toggleButtonText(saveButton, false));
 }
 
 // Сабмит формы добавления карточки
 function handleAddCardFormSubmit(evt) {
   evt.preventDefault();
-
   const saveButton = evt.target.querySelector(".popup__button");
   toggleButtonText(saveButton, true);
 
@@ -154,21 +166,23 @@ function handleAddCardFormSubmit(evt) {
       const newCard = createCard(
         cardData.name,
         cardData.link,
-        cardData.likes, // Массив лайков
-        cardData._id, // ID карточки
-        userId, // Используем глобальный userId
-        cardData.owner._id, // ID владельца карточки
-        handleOpenImagePopup // Функция для открытия изображения
+        cardData.likes,
+        cardData._id,
+        userId,
+        cardData.owner._id,
+        handleOpenImagePopup,
+        handleLikeStatusChange,
+        handleDeleteCard
       );
-
-      gallery.prepend(newCard); // Добавляем новую карточку
-      addCardForm.reset(); // Сбрасываем форму
-      closePopup(newCardPopup); // Закрываем попап
+      gallery.prepend(newCard);
+      addCardForm.reset();
+      resetButtonState(saveButton); // Сброс состояния кнопки при успешной отправке
+      closePopup(newCardPopup);
     })
     .catch((error) => {
       console.error("Ошибка добавления карточки:", error);
     })
-    .finally(() => toggleButtonText(saveButton, false)); // Возвращаем текст кнопки
+    .finally(() => toggleButtonText(saveButton, false));
 }
 
 // Открытие попапа с изображением
@@ -192,6 +206,7 @@ function toggleButtonText(button, isLoading) {
 
 // --- Слушатели ---
 editProfileButton.addEventListener("click", () => {
+  clearInputFields(editPopup, config); // Очистка полей ввода
   nameInput.value = profileName.textContent;
   jobInput.value = profileJob.textContent;
   openPopup(editPopup);
@@ -199,7 +214,7 @@ editProfileButton.addEventListener("click", () => {
 
 // Слушатель на контейнер аватара (обрабатывает клик на аватар и иконку)
 profileAvatarContainer.addEventListener("click", () => {
-  avatarForm.reset(); // Сбрасываем форму перед открытием
+  clearInputFields(avatarPopup, config); // Очистка полей ввода
   openPopup(avatarPopup);
 });
 
@@ -207,7 +222,7 @@ profileAvatarContainer.addEventListener("click", () => {
 avatarForm.addEventListener("submit", handleAvatarFormSubmit);
 
 addCardButton.addEventListener("click", () => {
-  addCardForm.reset();
+  clearInputFields(newCardPopup, config); // Очистка полей ввода
   openPopup(newCardPopup);
 });
 
@@ -217,8 +232,8 @@ addCardForm.addEventListener("submit", handleAddCardFormSubmit);
 addCloseButtonListeners();
 addOverlayClickListeners();
 
-// Валидация форм
-enableValidation({
+// Конфигурация для валидации
+const config = {
   formSelector: ".popup__form",
   inputSelector: ".popup__input",
   submitButtonSelector: ".popup__button",
@@ -226,7 +241,10 @@ enableValidation({
   inputErrorClass: "popup__input_type_error",
   errorClass: "popup__error_visible",
   errorActiveClass: "popup__input-error_active",
-});
+};
+
+// Включение валидации
+enableValidation(config);
 
 // Загрузка данных при старте
 loadData();

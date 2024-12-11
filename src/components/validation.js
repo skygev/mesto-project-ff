@@ -73,10 +73,16 @@ function setEventListeners(formElement, config) {
 // Функция для очистки полей ввода и скрытия ошибок
 function clearInputFields(popup, config) {
   const inputFields = popup.querySelectorAll(config.inputSelector);
+  const formElement = popup.querySelector("form");
   inputFields.forEach((input) => {
-    input.value = "";
-    hideInputError(popup, input, config);
+    input.value = ""; //очистка inputs
+    hideInputError(formElement, input, config); //очистка ошибок
   });
+  const buttonElement = popup.querySelector(config.submitButtonSelector);
+  if (buttonElement) {
+    const inputList = Array.from(popup.querySelectorAll(config.inputSelector));
+    toggleButtonState(inputList, buttonElement, config);
+  }
 }
 
 // Включение валидации для всех форм

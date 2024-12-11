@@ -9,13 +9,7 @@ function openPopup(popup) {
 function closePopup(popup) {
   popup.classList.remove("popup_is-animated");
   popup.classList.remove("popup_is-opened");
-  document.removeEventListener("keydown", handleEscClose); // Удаляем обработчик нажатия на клавишу Esc
-  // Сброс состояния кнопки при закрытии попапа
-  const saveButton = popup.querySelector(".popup__button"); // Находим кнопку в текущем попапе
-  if (saveButton) {
-    saveButton.disabled = true; // Делаем кнопку неактивной
-    saveButton.classList.add("popup__button_disabled"); // Добавляем класс для неактивной кнопки
-  }
+  document.removeEventListener("keydown", handleEscClose);
 }
 
 // Закрытие попапов по нажатию на крестик
